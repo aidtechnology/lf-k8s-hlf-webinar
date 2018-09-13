@@ -1,0 +1,32 @@
+image:
+  tag: 1.2.0
+
+persistence:
+  accessMode: ReadWriteOnce
+  size: 1Gi
+  storageClass: "managed-premium"
+
+caAddress: ca.lf.aidtech-test.xyz
+caUsername: ord2
+
+ord:
+  hlfToolsVersion: 1.1.0
+  type: kafka
+  ## MSP ID of the Orderer
+  mspID: AidTechMSP
+
+secrets:
+  # This should contain "genesis" block derived from a configtx.yaml
+  # configtxgen -profile OrdererGenesis -outputBlock genesis.block
+  genesis: hlf--genesis
+  adminCert: hlf--org-admincert
+
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 95
+        podAffinityTerm:
+          topologyKey: "kubernetes.io/hostname"
+          labelSelector:
+            matchLabels:
+              app: hlf-ord

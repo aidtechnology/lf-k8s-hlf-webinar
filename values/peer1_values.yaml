@@ -1,0 +1,31 @@
+image:
+  tag: 1.2.0
+
+persistence:
+  accessMode: ReadWriteOnce
+  size: 1Gi
+  storageClass: "managed-premium"
+
+caUsername: peer1
+caAddress: ca.lf.aidtech-test.xyz
+
+peer:
+  hlfToolsVersion: 1.1.0
+  databaseType: CouchDB
+  couchdbInstance: cdb-peer1
+  mspID: AidTechMSP
+
+secrets:
+  channel: hlf--channel
+  adminCert: hlf--org-admincert
+  adminKey: hlf--org-adminkey
+
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 95
+        podAffinityTerm:
+          topologyKey: "kubernetes.io/hostname"
+          labelSelector:
+            matchLabels:
+              app: hlf-peer

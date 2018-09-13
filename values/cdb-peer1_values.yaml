@@ -1,0 +1,16 @@
+image:
+  tag: 0.4.10
+
+persistence:
+  size: 1Gi
+  storageClass: "managed-premium"
+
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 95
+        podAffinityTerm:
+          topologyKey: "kubernetes.io/hostname"
+          labelSelector:
+            matchLabels:
+              app: hlf-couchdb

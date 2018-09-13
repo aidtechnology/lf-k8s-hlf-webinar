@@ -1,0 +1,55 @@
+image:
+  tag: 1.2.0
+
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    certmanager.k8s.io/cluster-issuer: "letsencrypt-production"
+  path: /
+  hosts:
+    - ca.lf.aidtech-test.xyz
+  tls:
+    - secretName: ca--tls
+      hosts:
+        - ca.lf.aidtech-test.xyz
+
+persistence:
+  accessMode: ReadWriteOnce
+  size: 1Gi
+  storageClass: "managed-premium"
+
+caName: ca
+
+db:
+  chart: ca-pg-postgresql
+
+config:
+  csr:
+    names:
+      c: IE
+      st: Dublin
+      l:
+      o: "AID:Tech"
+      ou: Blockchain
+  affiliations:
+    aidtech: []
+
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 95
+        podAffinityTerm:
+          topologyKey: "kubernetes.io/hostname"
+          labelSelector:
+            matchLabels:
+              app: hlf-ca
+  podAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+    - labelSelector:
+        matchExpressions:
+        - key: release
+          operator: In
+          values:
+          - ca-pg
+      topologyKey: "kubernetes.io/hostname"
