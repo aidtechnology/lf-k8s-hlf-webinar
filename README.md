@@ -6,9 +6,21 @@ Before running this tutorial you will need:
 
 1) A Kubernetes (K8S) cluster (you can get free credits to deploy a managed K8S cluster on AWS, GCP, Azure, etc)
 2) Helm (and Tiller) installed on K8S
-3) An nginx-ingress installation (using the Helm chart)
-4) A cert-manager installation (using the Helm chart)
-5) A domain name for your components (e.g. the Certificate Authority), connected to your nginx-ingress IP address - you can obtain one for free or $1.00
+3) An `nginx-ingress` installation (using the Helm chart)
+4) A `cert-manager` installation (using the Helm chart)
+5) A domain name for your components (e.g. the Certificate Authority), connected to your `nginx-ingress` IP address - you can obtain one for free or $1.00 at many Domain Name Registrars.
+
+### Before starting
+
+Currently, the `helm_values` files for the CA reference the following CA Domain Name: `ca.lf.aidtech-test.xyz` in the files:
+
+* `/helm_values/ca_values.yaml`
+* `/helm_values/ord1_values.yaml`
+* `/helm_values/ord2_values.yaml`
+* `/helm_values/peer1_values.yaml`
+* `/helm_values/peer2_values.yaml`
+
+Since you won't have access to this, you should set this domain name to one you've obtained/purchased, and which is pointing to the `nginx-ingress` IP address.
 
 ### Fabric CA
 
@@ -82,7 +94,7 @@ Create Genesis block and Channel
 
     configtxgen -profile OrdererGenesis -outputBlock genesis.block
 
-    configtxgen -profile ComposerChannel -channelID mychannel -outputCreateChannelTx mychannel.tx
+    configtxgen -profile MyChannel -channelID mychannel -outputCreateChannelTx mychannel.tx
 
 Save them as secrets
 
@@ -102,19 +114,21 @@ Install Kafka chart (use special values to ensure 4 Kafka brokers and that Kafka
 
 Install orderers
 
-    helm install stable/hlf-ord -n ord1 --namespace blockchain -f ./helm_values/ord1_values.yaml
+    export NUM=1
+
+    helm install stable/hlf-ord -n ord${NUM} --namespace blockchain -f ./helm_values/ord${NUM}_values.yaml
 
 Register orderer with CA
 
-    ORD_1_SECRET=$(kubectl -n blockchain get secret ord1-hlf-ord -o jsonpath="{.data.CA_PASSWORD}" | base64 --decode)
+    ORD_SECRET=$(kubectl -n blockchain get secret ord${NUM}-hlf-ord -o jsonpath="{.data.CA_PASSWORD}" | base64 --decode)
 
-    kubectl exec $CA_POD -n blockchain  -- fabric-ca-client register --id.name ord1 --id.secret $ORD_1_SECRET --id.type orderer
+    kubectl exec $CA_POD -n blockchain  -- fabric-ca-client register --id.name ord${NUM} --id.secret $ORD_SECRET --id.type orderer
 
 Get logs from orderer to check it's actually started
 
-    ORD_1=$(kubectl get pods -n blockchain -l "app=hlf-ord,release=ord1" -o jsonpath="{.items[0].metadata.name}")
+    ORD_POD=$(kubectl get pods -n blockchain -l "app=hlf-ord,release=ord${NUM}" -o jsonpath="{.items[0].metadata.name}")
 
-    kubectl logs $ORD_1 -n blockchain | grep "completeInitialization"
+    kubectl logs $ORD_POD -n blockchain | grep 'completeInitialization'
 
 > Repeat all above steps for Orderer 2, etc.
 
@@ -122,41 +136,49 @@ Get logs from orderer to check it's actually started
 
 Install CouchDB chart
 
-    helm install stable/hlf-couchdb -n cdb-peer1 --namespace blockchain -f ./helm_values/cdb-peer1_values.yaml
+    export NUM=1
+
+    helm install stable/hlf-couchdb -n cdb-peer${NUM} --namespace blockchain -f ./helm_values/cdb-peer${NUM}_values.yaml
 
 Check that CouchDB is running
 
-    CDB_1=$(kubectl get pods --namespace blockchain -l "app=hlf-couchdb,release=cdb-peer1" -o jsonpath="{.items[*].metadata.name}")
+    CDB=$(kubectl get pods --namespace blockchain -l "app=hlf-couchdb,release=cdb-peer${NUM}" -o jsonpath="{.items[*].metadata.name}")
 
-    kubectl logs $CDB_1 -n blockchain | grep "Apache CouchDB has started on"
+    kubectl logs $CDB -n blockchain | grep 'Apache CouchDB has started on'
 
-    helm install aidtech/hlf-peer -n peer1 --namespace blockchain -f /Users/sasha/Aid_Tech/deployer/trace_donate/lf_hlf_webinar/values/hlf-peer/peer1.yaml
+Install Peer
+
+    helm install stable/hlf-peer -n peer${NUM} --namespace blockchain -f ./helm_values/peer${NUM}_values.yaml
 
 Register peer with CA
 
-    PEER_1_SECRET=$(kubectl -n blockchain get secret peer1-hlf-peer -o jsonpath="{.data.CA_PASSWORD}" | base64 --decode)
+    PEER_SECRET=$(kubectl -n blockchain get secret peer${NUM}-hlf-peer -o jsonpath="{.data.CA_PASSWORD}" | base64 --decode)
 
-    kubectl exec $CA_POD -n blockchain  -- fabric-ca-client register --id.name peer1 --id.secret $PEER_1_SECRET --id.type orderer
+    kubectl exec $CA_POD -n blockchain  -- fabric-ca-client register --id.name peer${NUM} --id.secret $PEER_SECRET --id.type peer
 
 Check that Peer is running
 
-    PEER_1=$(kubectl get pods -n blockchain -l "app=hlf-peer,release=peer1" -o jsonpath="{.items[0].metadata.name}")
+    PEER_POD=$(kubectl get pods -n blockchain -l "app=hlf-peer,release=peer${NUM}" -o jsonpath="{.items[0].metadata.name}")
 
-    kubectl logs $PEER_1 -n blockchain | grep "Starting peer"
+    kubectl logs $PEER_POD -n blockchain | grep 'Starting peer'
 
 > Repeat all above steps for Peer 2, etc.
 
 Create channel (do this only once in Peer 1)
 
-    kubectl exec $PEER_1 -n blockchain -- peer channel create -o ord1-hlf-ord.blockchain.svc.cluster.local:7050 -c mychannel -f /hl_config/channel/mychannel.tx
+    kubectl exec $PEER_POD -n blockchain -- peer channel create -o ord1-hlf-ord.blockchain.svc.cluster.local:7050 -c mychannel -f /hl_config/channel/mychannel.tx
 
-Fetch and join channel for Peer 2, etc.
+Fetch and join channel
 
-    kubectl exec $PEER_2 --namespace blockchain -- peer channel fetch config /var/hyperledger/mychannel.block -c mychannel -o ord1-hlf-ord.blockchain.svc.cluster.local:7050
+    kubectl exec $PEER_POD --namespace blockchain -- peer channel fetch config /var/hyperledger/mychannel.block -c mychannel -o ord1-hlf-ord.blockchain.svc.cluster.local:7050
 
-    kubectl exec $PEER_2 --namespace blockchain -- bash -c 'CORE_PEER_MSPCONFIGPATH=$ADMIN_MSP_PATH peer channel join -b /var/hyperledger/mychannel.block'
+    kubectl exec $PEER_POD --namespace blockchain -- bash -c 'CORE_PEER_MSPCONFIGPATH=$ADMIN_MSP_PATH peer channel join -b /var/hyperledger/mychannel.block'
 
-[bis for Peer 2, etc.]
+> Repeat above 2 commands (`fetch` & `join`) for Peer 2, etc.
+
+Check which channels the peer has joined:
+
+    kubectl exec $PEER_POD --namespace blockchain -- peer channel list
 
 ### Delete deployment
 

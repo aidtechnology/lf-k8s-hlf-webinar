@@ -6,8 +6,8 @@ persistence:
   size: 1Gi
   storageClass: "managed-premium"
 
+caAddress: ca.lf.aidtech-test.xyz
 caUsername: peer2
-caAddress: ca.<<<DOMAIN>>>
 
 peer:
   hlfToolsVersion: 1.1.0

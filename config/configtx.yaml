@@ -20,11 +20,11 @@ Profiles:
             Organizations:
                 - *AidTech
         Consortiums:
-            ComposerConsortium:
+            MyConsortium:
                 Organizations:
                     - *AidTech
-    ComposerChannel:
-        Consortium: ComposerConsortium
+    MyChannel:
+        Consortium: MyConsortium
         Application:
             <<: *ApplicationDefaults
             Organizations:
