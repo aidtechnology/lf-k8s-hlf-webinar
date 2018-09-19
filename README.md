@@ -1,6 +1,8 @@
 # Webinar deployment
 
-## Create
+## Before starting
+
+### Pre-requisites
 
 Before running this tutorial you will need:
 
@@ -10,7 +12,25 @@ Before running this tutorial you will need:
 4) A `cert-manager` installation (using the Helm chart)
 5) A domain name for your components (e.g. the Certificate Authority), connected to your `nginx-ingress` IP address - you can obtain one for free or $1.00 at many Domain Name Registrars.
 
-### Before starting
+#### NGINX Ingress controller
+
+You can install the ingress controller by running this command:
+
+    helm install stable/nginx-ingress -n nginx-ingress --namespace ingress-controller
+
+#### Certificate manager
+
+You can install the certificate manager, to ensure you can auto-generate the TLS certificates
+
+    helm install stable/cert-manager -n cert-manager --namespace cert-manager
+
+Then we need to add the Staging and Production cluster issuers
+
+    kubectl create -f ./extra/certManagerCI_staging.yaml
+
+    kubectl create -f ./extra/certManagerCI_production.yaml
+
+### Customisation
 
 Currently, the `helm_values` files for the CA reference the following CA Domain Name: `ca.lf.aidtech-test.xyz` in the files:
 
@@ -21,6 +41,8 @@ Currently, the `helm_values` files for the CA reference the following CA Domain 
 * `/helm_values/peer2_values.yaml`
 
 Since you won't have access to this, you should set this domain name to one you've obtained/purchased, and which is pointing to the `nginx-ingress` IP address.
+
+## Creating
 
 ### Fabric CA
 
@@ -180,7 +202,7 @@ Check which channels the peer has joined:
 
     kubectl exec $PEER_POD -n blockchain -- peer channel list
 
-### Delete deployment
+## Deleting
 
     helm delete --purge peer1 peer2 cdb-peer1 cdb-peer2 kafka-hlf ord1 ord2 ca ca-pg
 
