@@ -204,12 +204,22 @@ Check which channels the peer has joined:
 
 ## Deleting
 
+Delete helm deployments
+
     helm delete --purge peer1 peer2 cdb-peer1 cdb-peer2 kafka-hlf ord1 ord2 ca ca-pg
 
-    rm -rf ./config/*MSP ./config/genesis.block ./config/mychannel.tx
+Delete stateful sets (in case Helm does not fully delete them)
 
     kubectl delete statefulset -n blockchain kafka-log kafka-hlf-zookeeper kafka-hlf
 
+Delete Persistent Volume Claims
+
     kubectl delete pvc -n blockchain ca-pg-postgresql data-kafka-hlf-zookeeper-0 data-kafka-hlf-zookeeper-1 data-kafka-hlf-zookeeper-2 datadir-kafka-hlf-0 datadir-kafka-hlf-1 datadir-kafka-hlf-2 datadir-kafka-hlf-3
 
+Delete secrets on K8S
+
     kubectl delete secret -n blockchain hlf--org-admincert  hlf--org-adminkey hlf--channel hlf--genesis
+
+Delete crypto material
+
+    rm -rf ./config/*MSP ./config/genesis.block ./config/mychannel.tx
