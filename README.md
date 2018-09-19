@@ -42,31 +42,31 @@ Check if server is ready
 
 Check that we don't have a certificate
 
-    kubectl exec $CA_POD -n blockchain  -- cat /var/hyperledger/fabric-ca/msp/signcerts/cert.pem
+    kubectl exec -n blockchain $CA_POD -- cat /var/hyperledger/fabric-ca/msp/signcerts/cert.pem
 
-    kubectl exec $CA_POD -n blockchain  -- bash -c 'fabric-ca-client enroll -d -u http://$CA_ADMIN:$CA_PASSWORD@$SERVICE_DNS:7054'
-
-    CA_INGRESS=$(kubectl get ingress -n blockchain -l "app=hlf-ca,release=ca" -o jsonpath="{.items[0].spec.rules[0].host}")
+    kubectl exec -n blockchain $CA_POD -- bash -c 'fabric-ca-client enroll -d -u http://$CA_ADMIN:$CA_PASSWORD@$SERVICE_DNS:7054'
 
 Check that ingress works correctly
+
+    CA_INGRESS=$(kubectl get ingress -n blockchain -l "app=hlf-ca,release=ca" -o jsonpath="{.items[0].spec.rules[0].host}")
 
     curl https://$CA_INGRESS/cainfo
 
 Get CA certificate [TODO: This should be using https and Fabric CA client 1.2]
 
-    FABRIC_CA_CLIENT_HOME=./config fabric-ca-client getcacert -u http://$CA_INGRESS -M AidTechMSP
+    FABRIC_CA_CLIENT_HOME=./config fabric-ca-client getcacert -u http://$CA_INGRESS -M ./AidTechMSP
 
 Get identity of org-admin
 
-    kubectl exec $CA_POD -n blockchain  -- fabric-ca-client identity list --id org-admin
+    kubectl exec -n blockchain $CA_POD -- fabric-ca-client identity list --id org-admin
 
 Register Organisation admin if the previous command did not work
 
-    kubectl exec $CA_POD -n blockchain  -- fabric-ca-client register --id.name org-admin --id.secret OrgAdm1nPW --id.attrs 'admin=true:ecert'
+    kubectl exec -n blockchain $CA_POD -- fabric-ca-client register --id.name org-admin --id.secret OrgAdm1nPW --id.attrs 'admin=true:ecert'
 
 Enroll the Organisation Admin identity
 
-    FABRIC_CA_CLIENT_HOME=./config fabric-ca-client enroll -u http://org-admin:OrgAdm1nPW@$CA_INGRESS -M AidTechMSP
+    FABRIC_CA_CLIENT_HOME=./config fabric-ca-client enroll -u http://org-admin:OrgAdm1nPW@$CA_INGRESS -M ./AidTechMSP
 
 Copy the signcerts to admincerts
 
@@ -78,13 +78,13 @@ Create a secret to hold the admincert
 
     ORG_CERT=$(ls ./config/AidTechMSP/admincerts/cert.pem)
 
-    kubectl -n blockchain create secret generic hlf--org-admincert --from-file=cert.pem=$ORG_CERT
+    kubectl create secret generic -n blockchain hlf--org-admincert --from-file=cert.pem=$ORG_CERT
 
 Find the adminkey and create a secret to hold it
 
     ORG_KEY=$(ls ./config/AidTechMSP/keystore/*_sk)
 
-    kubectl -n blockchain create secret generic hlf--org-adminkey --from-file=key.pem=$ORG_KEY
+    kubectl create secret generic -n blockchain hlf--org-adminkey --from-file=key.pem=$ORG_KEY
 
 ### Crypto material
 
@@ -92,15 +92,15 @@ Find the adminkey and create a secret to hold it
 
 Create Genesis block and Channel
 
-    configtxgen -profile OrdererGenesis -outputBlock genesis.block
+    configtxgen -profile OrdererGenesis -outputBlock ./genesis.block
 
-    configtxgen -profile MyChannel -channelID mychannel -outputCreateChannelTx mychannel.tx
+    configtxgen -profile MyChannel -channelID mychannel -outputCreateChannelTx ./mychannel.tx
 
 Save them as secrets
 
-    kubectl -n blockchain create secret generic hlf--genesis --from-file=genesis.block
+    kubectl create secret generic -n blockchain hlf--genesis --from-file=genesis.block
 
-    kubectl -n blockchain create secret generic hlf--channel --from-file=mychannel.tx
+    kubectl create secret generic -n blockchain hlf--channel --from-file=mychannel.tx
 
     cd ..
 
@@ -120,15 +120,15 @@ Install orderers
 
 Register orderer with CA
 
-    ORD_SECRET=$(kubectl -n blockchain get secret ord${NUM}-hlf-ord -o jsonpath="{.data.CA_PASSWORD}" | base64 --decode)
+    ORD_SECRET=$(kubectl get secret -n blockchain ord${NUM}-hlf-ord -o jsonpath="{.data.CA_PASSWORD}" | base64 --decode)
 
-    kubectl exec $CA_POD -n blockchain  -- fabric-ca-client register --id.name ord${NUM} --id.secret $ORD_SECRET --id.type orderer
+    kubectl exec -n blockchain $CA_POD -- fabric-ca-client register --id.name ord${NUM} --id.secret $ORD_SECRET --id.type orderer
 
 Get logs from orderer to check it's actually started
 
     ORD_POD=$(kubectl get pods -n blockchain -l "app=hlf-ord,release=ord${NUM}" -o jsonpath="{.items[0].metadata.name}")
 
-    kubectl logs $ORD_POD -n blockchain | grep 'completeInitialization'
+    kubectl logs -n blockchain $ORD_POD | grep 'completeInitialization'
 
 > Repeat all above steps for Orderer 2, etc.
 
@@ -142,9 +142,9 @@ Install CouchDB chart
 
 Check that CouchDB is running
 
-    CDB=$(kubectl get pods --namespace blockchain -l "app=hlf-couchdb,release=cdb-peer${NUM}" -o jsonpath="{.items[*].metadata.name}")
+    CDB_POD=$(kubectl get pods -n blockchain -l "app=hlf-couchdb,release=cdb-peer${NUM}" -o jsonpath="{.items[*].metadata.name}")
 
-    kubectl logs $CDB -n blockchain | grep 'Apache CouchDB has started on'
+    kubectl logs -n blockchain $CDB_POD | grep 'Apache CouchDB has started on'
 
 Install Peer
 
@@ -152,33 +152,33 @@ Install Peer
 
 Register peer with CA
 
-    PEER_SECRET=$(kubectl -n blockchain get secret peer${NUM}-hlf-peer -o jsonpath="{.data.CA_PASSWORD}" | base64 --decode)
+    PEER_SECRET=$(kubectl get secret -n blockchain peer${NUM}-hlf-peer -o jsonpath="{.data.CA_PASSWORD}" | base64 --decode)
 
-    kubectl exec $CA_POD -n blockchain  -- fabric-ca-client register --id.name peer${NUM} --id.secret $PEER_SECRET --id.type peer
+    kubectl exec -n blockchain $CA_POD -- fabric-ca-client register --id.name peer${NUM} --id.secret $PEER_SECRET --id.type peer
 
 Check that Peer is running
 
     PEER_POD=$(kubectl get pods -n blockchain -l "app=hlf-peer,release=peer${NUM}" -o jsonpath="{.items[0].metadata.name}")
 
-    kubectl logs $PEER_POD -n blockchain | grep 'Starting peer'
+    kubectl logs -n blockchain $PEER_POD | grep 'Starting peer'
 
 > Repeat all above steps for Peer 2, etc.
 
 Create channel (do this only once in Peer 1)
 
-    kubectl exec $PEER_POD -n blockchain -- peer channel create -o ord1-hlf-ord.blockchain.svc.cluster.local:7050 -c mychannel -f /hl_config/channel/mychannel.tx
+    kubectl exec -n blockchain $PEER_POD -- peer channel create -o ord1-hlf-ord.blockchain.svc.cluster.local:7050 -c mychannel -f /hl_config/channel/mychannel.tx
 
 Fetch and join channel
 
-    kubectl exec $PEER_POD --namespace blockchain -- peer channel fetch config /var/hyperledger/mychannel.block -c mychannel -o ord1-hlf-ord.blockchain.svc.cluster.local:7050
+    kubectl exec -n blockchain $PEER_POD -- peer channel fetch config /var/hyperledger/mychannel.block -c mychannel -o ord1-hlf-ord.blockchain.svc.cluster.local:7050
 
-    kubectl exec $PEER_POD --namespace blockchain -- bash -c 'CORE_PEER_MSPCONFIGPATH=$ADMIN_MSP_PATH peer channel join -b /var/hyperledger/mychannel.block'
+    kubectl exec -n blockchain $PEER_POD -- bash -c 'CORE_PEER_MSPCONFIGPATH=$ADMIN_MSP_PATH peer channel join -b /var/hyperledger/mychannel.block'
 
 > Repeat above 2 commands (`fetch` & `join`) for Peer 2, etc.
 
 Check which channels the peer has joined:
 
-    kubectl exec $PEER_POD --namespace blockchain -- peer channel list
+    kubectl exec $PEER_POD -n blockchain -- peer channel list
 
 ### Delete deployment
 
