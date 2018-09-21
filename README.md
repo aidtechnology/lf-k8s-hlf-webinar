@@ -32,6 +32,8 @@ Then we need to add the Staging and Production cluster issuers
 
 ### Customisation
 
+#### Domain Name
+
 Currently, the `helm_values` files for the CA reference the following CA Domain Name: `ca.lf.aidtech-test.xyz` in the files:
 
 * `/helm_values/ca_values.yaml`
@@ -41,6 +43,12 @@ Currently, the `helm_values` files for the CA reference the following CA Domain 
 * `/helm_values/peer2_values.yaml`
 
 Since you won't have access to this, you should set this domain name to one you've obtained/purchased, and which is pointing to the `nginx-ingress` IP address.
+
+#### Storage
+
+The Helm values in this repository assume an Azure Kubernetes Service (AKS) deployment, hence you will see the `managed-premium` storage class.
+
+You may wish to change this to default or to another type of storage class if you are using AWS, GCP or a local cluster.
 
 ## Creating
 
