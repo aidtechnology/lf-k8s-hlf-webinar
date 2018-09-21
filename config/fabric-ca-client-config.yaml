@@ -58,8 +58,10 @@ mspdir: ./AidTechMSP
 #    is enabled on server
 #############################################################################
 tls:
+  enabled: false
   # TLS section for secure socket connection
   certfiles:
+    - ./Lets_Encrypt_Authority_X3.pem
   client:
     certfile:
     keyfile:

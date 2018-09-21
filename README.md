@@ -66,7 +66,7 @@ Check that we don't have a certificate
 
     kubectl exec -n blockchain $CA_POD -- cat /var/hyperledger/fabric-ca/msp/signcerts/cert.pem
 
-    kubectl exec -n blockchain $CA_POD -- bash -c 'fabric-ca-client enroll -d -u http://$CA_ADMIN:$CA_PASSWORD@$SERVICE_DNS:7054'
+    kubectl exec -n blockchain $CA_POD -- bash -c 'fabric-ca-client enroll -d -u https://$CA_ADMIN:$CA_PASSWORD@$SERVICE_DNS:7054'
 
 Check that ingress works correctly
 
@@ -74,9 +74,7 @@ Check that ingress works correctly
 
     curl https://$CA_INGRESS/cainfo
 
-Get CA certificate [TODO: This should be using https and Fabric CA client 1.2]
-
-    FABRIC_CA_CLIENT_HOME=./config fabric-ca-client getcacert -u http://$CA_INGRESS -M ./AidTechMSP
+    FABRIC_CA_CLIENT_HOME=./config fabric-ca-client getcacert -u https://$CA_INGRESS -M ./AidTechMSP
 
 Get identity of org-admin
 
@@ -88,7 +86,7 @@ Register Organisation admin if the previous command did not work
 
 Enroll the Organisation Admin identity
 
-    FABRIC_CA_CLIENT_HOME=./config fabric-ca-client enroll -u http://org-admin:OrgAdm1nPW@$CA_INGRESS -M ./AidTechMSP
+    FABRIC_CA_CLIENT_HOME=./config fabric-ca-client enroll -u https://org-admin:OrgAdm1nPW@$CA_INGRESS -M ./AidTechMSP
 
 Copy the signcerts to admincerts
 
