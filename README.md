@@ -66,7 +66,7 @@ Check that we don't have a certificate
 
     kubectl exec -n blockchain $CA_POD -- cat /var/hyperledger/fabric-ca/msp/signcerts/cert.pem
 
-    kubectl exec -n blockchain $CA_POD -- bash -c 'fabric-ca-client enroll -d -u https://$CA_ADMIN:$CA_PASSWORD@$SERVICE_DNS:7054'
+    kubectl exec -n blockchain $CA_POD -- bash -c 'fabric-ca-client enroll -d -u http://$CA_ADMIN:$CA_PASSWORD@$SERVICE_DNS:7054'
 
 Check that ingress works correctly
 
@@ -204,7 +204,7 @@ Check which channels the peer has joined:
 
 Delete helm deployments
 
-    helm delete --purge peer1 peer2 cdb-peer1 cdb-peer2 kafka-hlf ord1 ord2 ca ca-pg
+    helm delete --purge ca-pg ca kafka-hlf ord1 ord2 cdb-peer1 peer1 cdb-peer2 peer2
 
 Delete stateful sets (in case Helm does not fully delete them)
 

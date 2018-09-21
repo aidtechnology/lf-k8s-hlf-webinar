@@ -25,6 +25,7 @@ db:
   chart: ca-pg-postgresql
 
 config:
+  hlfToolsVersion: 1.2.0
   csr:
     names:
       c: IE

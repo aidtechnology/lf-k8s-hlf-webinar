@@ -10,7 +10,7 @@ caAddress: ca.lf.aidtech-test.xyz
 caUsername: peer2
 
 peer:
-  hlfToolsVersion: 1.1.0
+  hlfToolsVersion: 1.2.0
   databaseType: CouchDB
   couchdbInstance: cdb-peer2
   mspID: AidTechMSP
@@ -19,6 +19,7 @@ secrets:
   channel: hlf--channel
   adminCert: hlf--org-admincert
   adminKey: hlf--org-adminkey
+  caServerTls: ca--tls
 
 affinity:
   podAntiAffinity:

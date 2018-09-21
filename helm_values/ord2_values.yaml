@@ -10,7 +10,7 @@ caAddress: ca.lf.aidtech-test.xyz
 caUsername: ord2
 
 ord:
-  hlfToolsVersion: 1.1.0
+  hlfToolsVersion: 1.2.0
   type: kafka
   ## MSP ID of the Orderer
   mspID: AidTechMSP
@@ -20,6 +20,7 @@ secrets:
   # configtxgen -profile OrdererGenesis -outputBlock genesis.block
   genesis: hlf--genesis
   adminCert: hlf--org-admincert
+  caServerTls: ca--tls
 
 affinity:
   podAntiAffinity:
