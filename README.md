@@ -1,3 +1,26 @@
+Table of Contents
+=================
+
+   * [Webinar deployment](#webinar-deployment)
+      * [Before starting](#before-starting)
+         * [Pre-requisites](#pre-requisites)
+            * [NGINX Ingress controller](#nginx-ingress-controller)
+            * [Certificate manager](#certificate-manager)
+         * [Customisation](#customisation)
+            * [Domain Name](#domain-name)
+            * [Storage](#storage)
+      * [Creating](#creating)
+         * [Fabric CA](#fabric-ca)
+         * [Crypto material](#crypto-material)
+         * [Kafka for Ordering service](#kafka-for-ordering-service)
+         * [Fabric Orderer](#fabric-orderer)
+         * [Fabric Peer](#fabric-peer)
+      * [Deleting](#deleting)
+      * [Extra resources](#extra-resources)
+         * [Repositories](#repositories)
+         * [Courses](#courses)
+         * [FAQ](#faq)
+
 # Webinar deployment
 
 ## Before starting
@@ -229,3 +252,35 @@ Delete secrets on K8S
 Delete crypto material
 
     rm -rf ./config/*MSP ./config/genesis.block ./config/mychannel.tx
+
+## Extra resources
+
+### Repositories
+
+Our charts can be found at the official Helm Charts repository:
+
+https://github.com/helm/charts
+
+And also on our own open-source repository:
+
+https://github.com/aidtechnology/at-charts
+
+We also have a repository hosting the Fabric CA client Homebrew installer (for OS X):
+
+https://github.com/aidtechnology/homebrew-fabric-ca
+
+### Courses
+
+*Blockchain for Business - An Introduction to Hyperledger Technologies*, where we have contributed the Hyperledger Composer chapter:
+
+https://www.edx.org/course/blockchain-business-introduction-linuxfoundationx-lfs171x-0
+
+*Blockchain for Blockchain Applications* on Packt and Udemy:
+
+https://www.packtpub.com/application-development/hyperledger-blockchain-applications-video
+
+https://www.udemy.com/hyperledger-for-blockchain-applications/
+
+### FAQ
+
+> In progress
