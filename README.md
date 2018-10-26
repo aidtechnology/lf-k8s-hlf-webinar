@@ -23,6 +23,8 @@ Table of Contents
 
 # Webinar deployment
 
+> Important note! The content of these instructions has changed since the webinar, following improvements in the hlf-ca, hlf-ord and hlf-peer charts.
+
 ## Before starting
 
 ### Pre-requisites
@@ -67,21 +69,13 @@ Currently, the `helm_values` files for the CA reference the following CA Domain 
 
 Since you won't have access to this, you should set this domain name to one you've obtained/purchased, and which is pointing to the `nginx-ingress` IP address.
 
-#### Storage
-
-The Helm values in this repository assume an Azure Kubernetes Service (AKS) deployment, hence you will see the `managed-premium` storage class.
-
-You may wish to change this to default or to another type of storage class if you are using AWS, GCP or a local cluster.
-
 ## Creating
 
 ### Fabric CA
 
-Install the PostgeSQL chart
+#### Installing
 
-    helm install stable/postgresql -n ca-pg --namespace blockchain -f ./helm_values/ca-pg_values.yaml
-
-Install the Fabric CA chart (it automatically gets the login information from the PostgreSQL chart secret)
+Install the Fabric CA chart (it automatically creates a postgresql database)
 
     helm install stable/hlf-ca -n ca --namespace blockchain -f ./helm_values/ca_values.yaml
 
@@ -107,7 +101,11 @@ Check that ingress works correctly
 
     FABRIC_CA_CLIENT_HOME=./config fabric-ca-client getcacert -u https://$CA_INGRESS -M ./AidTechMSP
 
-Get identity of org-admin
+#### Identities
+
+##### Organisation admin
+
+Get identity of org-admin (this should not exist at first)
 
     kubectl exec -n blockchain $CA_POD -- fabric-ca-client identity list --id org-admin
 
@@ -115,7 +113,7 @@ Register Organisation admin if the previous command did not work
 
     kubectl exec -n blockchain $CA_POD -- fabric-ca-client register --id.name org-admin --id.secret OrgAdm1nPW --id.attrs 'admin=true:ecert'
 
-Enroll the Organisation Admin identity
+Enroll the Organisation Admin identity (typically we would use a more secure password than `OrgAdm1nPW`, etc.)
 
     FABRIC_CA_CLIENT_HOME=./config fabric-ca-client enroll -u https://org-admin:OrgAdm1nPW@$CA_INGRESS -M ./AidTechMSP
 
@@ -136,6 +134,12 @@ Find the adminkey and create a secret to hold it
     ORG_KEY=$(ls ./config/AidTechMSP/keystore/*_sk)
 
     kubectl create secret generic -n blockchain hlf--org-adminkey --from-file=key.pem=$ORG_KEY
+
+Create a secret to hold the CA certificate:
+
+    CA_CERT=$(ls ./config/AidTechMSP/cacerts/*.pem)
+
+    kubectl create secret generic -n blockchain hlf--ca-cert --from-file=cacert.pem=$CA_CERT
 
 ### Crypto material
 
@@ -163,17 +167,35 @@ Install Kafka chart (use special values to ensure 4 Kafka brokers and that Kafka
 
 ### Fabric Orderer
 
-Install orderers
+For each orderer set the `NUM` environmental variable and follow the below instructions (in this example, either 1 or 2):
 
     export NUM=1
 
+#### Crypto material
+
+Register orderer with CA (typically we would use a more secure password than `ord1_pw`, etc.)
+
+    kubectl exec -n blockchain $CA_POD -- fabric-ca-client register --id.name ord${NUM} --id.secret ord${NUM}_pw --id.type orderer
+
+    FABRIC_CA_CLIENT_HOME=./config fabric-ca-client enroll -d -u https://ord${NUM}:ord${NUM}_pw@$CA_INGRESS -M ord${NUM}_MSP
+
+Save the Orderer certificate in a secret
+
+    NODE_CERT=$(ls ./config/ord${NUM}_MSP/signcerts/*.pem)
+
+    kubectl create secret generic -n blockchain hlf--ord${NUM}-idcert --from-file=cert.pem=${NODE_CERT}
+
+Save the Orderer private key in another secret
+
+    NODE_KEY=$(ls ./config/ord${NUM}_MSP/keystore/*_sk)
+
+    kubectl create secret generic -n blockchain hlf--ord${NUM}-idkey --from-file=key.pem=${NODE_KEY}
+
+#### Helm charts
+
+Install orderers
+
     helm install stable/hlf-ord -n ord${NUM} --namespace blockchain -f ./helm_values/ord${NUM}_values.yaml
-
-Register orderer with CA
-
-    ORD_SECRET=$(kubectl get secret -n blockchain ord${NUM}-hlf-ord -o jsonpath="{.data.CA_PASSWORD}" | base64 --decode)
-
-    kubectl exec -n blockchain $CA_POD -- fabric-ca-client register --id.name ord${NUM} --id.secret $ORD_SECRET --id.type orderer
 
 Get logs from orderer to check it's actually started
 
@@ -185,9 +207,31 @@ Get logs from orderer to check it's actually started
 
 ### Fabric Peer
 
-Install CouchDB chart
+For each peer set the `NUM` environmental variable and follow the below instructions (in this example, either 1 or 2):
 
     export NUM=1
+
+#### Crypto material
+
+Register orderer with CA (typically we would use a more secure password than `peer1_pw`, etc.)
+
+    kubectl exec -n blockchain $CA_POD -- fabric-ca-client register --id.name peer${NUM} --id.secret peer${NUM}_pw --id.type peer
+
+    FABRIC_CA_CLIENT_HOME=./config fabric-ca-client enroll -d -u https://peer${NUM}:peer${NUM}_pw@$CA_INGRESS -M peer${NUM}_MSP
+
+Save the Orderer certificate in a secret
+
+    NODE_CERT=$(ls ./config/peer${NUM}_MSP/signcerts/*.pem)
+
+    kubectl create secret generic -n blockchain hlf--peer${NUM}-idcert --from-file=cert.pem=${NODE_CERT}
+
+Save the Orderer private key in another secret
+
+    NODE_KEY=$(ls ./config/peer${NUM}_MSP/keystore/*_sk)
+
+    kubectl create secret generic -n blockchain hlf--peer${NUM}-idkey --from-file=key.pem=${NODE_KEY}
+
+Install CouchDB chart
 
     helm install stable/hlf-couchdb -n cdb-peer${NUM} --namespace blockchain -f ./helm_values/cdb-peer${NUM}_values.yaml
 
@@ -201,12 +245,6 @@ Install Peer
 
     helm install stable/hlf-peer -n peer${NUM} --namespace blockchain -f ./helm_values/peer${NUM}_values.yaml
 
-Register peer with CA
-
-    PEER_SECRET=$(kubectl get secret -n blockchain peer${NUM}-hlf-peer -o jsonpath="{.data.CA_PASSWORD}" | base64 --decode)
-
-    kubectl exec -n blockchain $CA_POD -- fabric-ca-client register --id.name peer${NUM} --id.secret $PEER_SECRET --id.type peer
-
 Check that Peer is running
 
     PEER_POD=$(kubectl get pods -n blockchain -l "app=hlf-peer,release=peer${NUM}" -o jsonpath="{.items[0].metadata.name}")
@@ -214,6 +252,8 @@ Check that Peer is running
     kubectl logs -n blockchain $PEER_POD | grep 'Starting peer'
 
 > Repeat all above steps for Peer 2, etc.
+
+#### Channels
 
 Create channel (do this only once in Peer 1)
 

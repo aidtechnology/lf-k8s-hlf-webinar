@@ -8,24 +8,24 @@ ingress:
     certmanager.k8s.io/cluster-issuer: "letsencrypt-production"
   path: /
   hosts:
-    - ca.lf.aidtech-test.xyz
+    # TODO: Change this back
+    - ca.hlfdev.aidtech-test.xyz
   tls:
     - secretName: ca--tls
       hosts:
-        - ca.lf.aidtech-test.xyz
+        # TODO: Change this back
+        - ca.hlfdev.aidtech-test.xyz
 
 persistence:
   accessMode: ReadWriteOnce
   size: 1Gi
-  storageClass: "managed-premium"
 
 caName: ca
 
-db:
-  chart: ca-pg-postgresql
+postgresql:
+  enabled: true
 
 config:
-  hlfToolsVersion: 1.2.0
   csr:
     names:
       c: IE
@@ -48,9 +48,7 @@ affinity:
   podAffinity:
     requiredDuringSchedulingIgnoredDuringExecution:
     - labelSelector:
-        matchExpressions:
-        - key: release
-          operator: In
-          values:
-          - ca-pg
+        matchLabels:
+          app: postgresql
+          release: ca
       topologyKey: "kubernetes.io/hostname"

@@ -4,18 +4,20 @@ image:
 persistence:
   accessMode: ReadWriteOnce
   size: 1Gi
-  storageClass: "managed-premium"
 
 caAddress: ca.lf.aidtech-test.xyz
 caUsername: peer2
 
 peer:
-  hlfToolsVersion: 1.2.0
   databaseType: CouchDB
   couchdbInstance: cdb-peer2
   mspID: AidTechMSP
 
 secrets:
+  peer:
+    cert: hlf--peer2-idcert
+    key: hlf--peer2-idkey
+    caCert: hlf--ca-cert
   channel: hlf--channel
   adminCert: hlf--org-admincert
   adminKey: hlf--org-adminkey

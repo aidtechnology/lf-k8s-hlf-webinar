@@ -58,9 +58,6 @@ persistence:
   ## The size of the PersistentVolume to allocate to each Kafka Pod in the StatefulSet
   size: "1Gi"
 
-  ## Kafka data Persistent Volume Storage Class
-  storageClass: "managed-premium"
-
 ## Prometheus Exporters / Metrics
 prometheus:
   ## Prometheus JMX Exporter: exposes the majority of Kafkas metrics
@@ -94,7 +91,6 @@ zookeeper:
     enabled: true
     ## The amount of PV storage allocated to each Zookeeper pod in the statefulset
     size: "1Gi"
-    storageClass: "managed-premium"
 
   ## Pod scheduling preferences (by default keep pods within a release on separate nodes).
   ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
