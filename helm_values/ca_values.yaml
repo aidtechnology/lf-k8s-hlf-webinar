@@ -9,12 +9,12 @@ ingress:
   path: /
   hosts:
     # TODO: Change this back
-    - ca.hlfdev.aidtech-test.xyz
+    - ca.lf.aidtech-test.xyz
   tls:
     - secretName: ca--tls
       hosts:
         # TODO: Change this back
-        - ca.hlfdev.aidtech-test.xyz
+        - ca.lf.aidtech-test.xyz
 
 persistence:
   accessMode: ReadWriteOnce

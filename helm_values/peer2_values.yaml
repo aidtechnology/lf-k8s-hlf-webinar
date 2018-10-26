@@ -5,9 +5,6 @@ persistence:
   accessMode: ReadWriteOnce
   size: 1Gi
 
-caAddress: ca.lf.aidtech-test.xyz
-caUsername: peer2
-
 peer:
   databaseType: CouchDB
   couchdbInstance: cdb-peer2

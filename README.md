@@ -59,15 +59,11 @@ Then we need to add the Staging and Production cluster issuers
 
 #### Domain Name
 
-Currently, the `helm_values` files for the CA reference the following CA Domain Name: `ca.lf.aidtech-test.xyz` in the files:
-
-* `/helm_values/ca_values.yaml`
-* `/helm_values/ord1_values.yaml`
-* `/helm_values/ord2_values.yaml`
-* `/helm_values/peer1_values.yaml`
-* `/helm_values/peer2_values.yaml`
+Currently, the `helm_values` files for the CA reference the following CA Domain Name: `ca.lf.aidtech-test.xyz` in  `/helm_values/ca_values.yaml`
 
 Since you won't have access to this, you should set this domain name to one you've obtained/purchased, and which is pointing to the `nginx-ingress` IP address.
+
+Alternatively, you may not use the Ingress at all and disable it, and instead use the CA through port-forwarding from the Kubernetes cluster to your local machine. For this you will need to adapt the instructions provided to your own use-case.
 
 ## Creating
 

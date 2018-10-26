@@ -5,9 +5,6 @@ persistence:
   accessMode: ReadWriteOnce
   size: 1Gi
 
-caAddress: ca.lf.aidtech-test.xyz
-caUsername: ord2
-
 ord:
   type: kafka
   ## MSP ID of the Orderer
