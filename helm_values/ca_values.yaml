@@ -26,6 +26,7 @@ postgresql:
   enabled: true
 
 config:
+  hlfToolsVersion: 1.2.0
   csr:
     names:
       c: IE
