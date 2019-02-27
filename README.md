@@ -23,7 +23,7 @@ Table of Contents
 
 # Webinar deployment
 
-> Important note! The content of these instructions has changed since the webinar, following improvements in the hlf-ca, hlf-ord and hlf-peer charts.
+> Important note! The content of these instructions has changed since the webinar, following improvements in the hlf-ca, hlf-ord and hlf-peer charts. You also may wish to look at the newer https://github.com/aidtechnology/hgf-k8s-workshop repository and/or try your hands at https://github.com/aidtechnology/nephos, which helps automate the deployment process.
 
 ## Before starting
 
